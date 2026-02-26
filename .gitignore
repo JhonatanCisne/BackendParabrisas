@@ -31,3 +31,14 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignorar el archivo de configuración con credenciales reales
+src/main/resources/application.properties
+
+# Ignorar archivos temporales de IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+target/
