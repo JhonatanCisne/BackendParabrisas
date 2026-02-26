@@ -3,6 +3,7 @@ package com.parabrisas.backend.venta;
 import com.parabrisas.backend.usuario.Usuario;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -21,7 +22,7 @@ public class Venta {
     private LocalDate fechaVenta;
 
     @Column(nullable = false)
-    private Float totalVenta;
+    private BigDecimal totalVenta;
 
     public Venta() {}
 
@@ -49,11 +50,11 @@ public class Venta {
         this.fechaVenta = fechaVenta;
     }
 
-    public Float getTotalVenta() {
+    public BigDecimal getTotalVenta() {
         return totalVenta;
     }
 
-    public void setTotalVenta(Float totalVenta) {
+    public void setTotalVenta(BigDecimal totalVenta) {
         this.totalVenta = totalVenta;
     }
 }

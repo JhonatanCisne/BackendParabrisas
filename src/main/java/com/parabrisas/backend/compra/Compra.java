@@ -4,6 +4,7 @@ import com.parabrisas.backend.proveedor.Proveedor;
 import com.parabrisas.backend.usuario.Usuario;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -26,7 +27,7 @@ public class Compra {
     private LocalDate fechaCompra;
 
     @Column(nullable = false)
-    private Float totalCompra;
+    private BigDecimal totalCompra;
 
     public Compra() {}
 
@@ -62,11 +63,11 @@ public class Compra {
         this.fechaCompra = fechaCompra;
     }
 
-    public Float getTotalCompra() {
+    public BigDecimal getTotalCompra() {
         return totalCompra;
     }
 
-    public void setTotalCompra(Float totalCompra) {
+    public void setTotalCompra(BigDecimal totalCompra) {
         this.totalCompra = totalCompra;
     }
 }
