@@ -138,4 +138,13 @@ public class ProductoService {
                 p.getUbicacionAlmacen()
         );
     }
+
+    @Transactional(readOnly = true)
+    public List<ProductListDTO> buscarProductosPorPlaca(String placa) {
+        // Devolver todos los productos disponibles con stock > 0
+        return productoRepository.findAll().stream()
+                .filter(p -> p.getStockActual() > 0)
+                .map(this::mapToProductListDTO)
+                .collect(Collectors.toList());
+    }
 }
