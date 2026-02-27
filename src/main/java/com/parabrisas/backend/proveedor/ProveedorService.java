@@ -1,12 +1,12 @@
 package com.parabrisas.backend.proveedor;
 
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProveedorService {
@@ -65,6 +65,13 @@ public class ProveedorService {
             throw new RuntimeException("No se puede eliminar: El proveedor no existe.");
         }
         proveedorRepository.deleteById((long) idProveedor);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProveedorDTO> listarTodos() {
+        return proveedorRepository.findAll().stream()
+                .map(this::mapEntityToDto)
+                .collect(Collectors.toList());
     }
 
     // Métodos de conversión
