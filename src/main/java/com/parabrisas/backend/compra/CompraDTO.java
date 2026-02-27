@@ -4,9 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.parabrisas.backend.detalleCompra.DetalleListCompraDTO;
-import jakarta.validation.constraints.*;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record CompraDTO(
         Integer idCompra,
 

@@ -7,6 +7,8 @@ public record LoginResponseDTO(
 
     String nombres,
 
+    Long idUsuario,
+
     String rol,
 
     Long expiraEn

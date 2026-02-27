@@ -1,22 +1,23 @@
 package com.parabrisas.backend.venta;
 
 
-import com.parabrisas.backend.detalleVenta.DetalleVenta;
-import com.parabrisas.backend.detalleVenta.DetalleVentaListDTO;
-import com.parabrisas.backend.detalleVenta.DetalleVentaRepository;
-import com.parabrisas.backend.producto.Producto;
-import com.parabrisas.backend.usuario.Usuario;
-import com.parabrisas.backend.usuario.UsuarioRepository;
-import com.parabrisas.backend.producto.ProductoRepository;
-import com.parabrisas.backend.producto.ProductoService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.parabrisas.backend.detalleVenta.DetalleVenta;
+import com.parabrisas.backend.detalleVenta.DetalleVentaListDTO;
+import com.parabrisas.backend.detalleVenta.DetalleVentaRepository;
+import com.parabrisas.backend.producto.Producto;
+import com.parabrisas.backend.producto.ProductoRepository;
+import com.parabrisas.backend.producto.ProductoService;
+import com.parabrisas.backend.usuario.Usuario;
+import com.parabrisas.backend.usuario.UsuarioRepository;
 
 @Service
 public class VentaService {
@@ -52,6 +53,7 @@ public class VentaService {
                 .map(d -> d.precioVenta().multiply(new java.math.BigDecimal(d.cantidad())))
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
         venta.setTotalVenta(total);
+        venta.setPlaca(placa);
 
         Venta ventaGuardada = ventaRepository.save(venta);
 
@@ -80,8 +82,8 @@ public class VentaService {
         return ventaRepository.findAll().stream()
                 .map(v -> {
                     List<DetalleVentaListDTO> detalles = detalleVentaRepository.findByVenta(v)
-                            .stream().map(d -> mapToDetalleDTO(d, "N/A")).collect(Collectors.toList());
-                    return mapToVentaDTO(v, detalles, "N/A");
+                            .stream().map(d -> mapToDetalleDTO(d, v.getPlaca())).collect(Collectors.toList());
+                    return mapToVentaDTO(v, detalles, v.getPlaca());
                 }).collect(Collectors.toList());
     }
 
@@ -95,8 +97,23 @@ public class VentaService {
 
         return Optional.of(ventas.stream().map(v -> {
             List<DetalleVentaListDTO> detalles = detalleVentaRepository.findByVenta(v)
-                    .stream().map(d -> mapToDetalleDTO(d, "N/A")).collect(Collectors.toList());
-            return mapToVentaDTO(v, detalles, "N/A");
+                    .stream().map(d -> mapToDetalleDTO(d, v.getPlaca())).collect(Collectors.toList());
+            return mapToVentaDTO(v, detalles, v.getPlaca());
+        }).collect(Collectors.toList()));
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<List<VentaDT0>> buscarVentaPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Venta> ventas = ventaRepository.findAll().stream()
+                .filter(v -> !v.getFechaVenta().isBefore(fechaInicio) && !v.getFechaVenta().isAfter(fechaFin))
+                .collect(Collectors.toList());
+
+        if (ventas.isEmpty()) return Optional.empty();
+
+        return Optional.of(ventas.stream().map(v -> {
+            List<DetalleVentaListDTO> detalles = detalleVentaRepository.findByVenta(v)
+                    .stream().map(d -> mapToDetalleDTO(d, v.getPlaca())).collect(Collectors.toList());
+            return mapToVentaDTO(v, detalles, v.getPlaca());
         }).collect(Collectors.toList()));
     }
 
@@ -107,6 +124,15 @@ public class VentaService {
             List<DetalleVentaListDTO> detalles = detalleVentaRepository.findByVenta(v)
                     .stream().map(d -> mapToDetalleDTO(d, placa)).collect(Collectors.toList());
             return List.of(mapToVentaDTO(v, detalles, placa));
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<VentaDT0> buscarVentaPorId(Long idVenta) {
+        return ventaRepository.findById(idVenta).map(venta -> {
+            List<DetalleVentaListDTO> detalles = detalleVentaRepository.findByVenta(venta)
+                    .stream().map(d -> mapToDetalleDTO(d, venta.getPlaca())).collect(Collectors.toList());
+            return mapToVentaDTO(venta, detalles, venta.getPlaca());
         });
     }
 
