@@ -1,12 +1,13 @@
 package com.parabrisas.backend.usuario;
 
-import com.parabrisas.backend.security.jwt.JwtUtils;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.parabrisas.backend.usuario.LoginRequestDTO;
 
-import java.util.Optional;
+import com.parabrisas.backend.security.jwt.JwtUtils;
 
 @Service
 public class UsuarioService {
@@ -38,6 +39,7 @@ public class UsuarioService {
                 token,
                 "Bienvenido " + usuario.getNombres(),
                 usuario.getNombres(),
+                usuario.getIdUsuario(),
                 usuario.getRol(),
                 3600L
         );
@@ -95,6 +97,14 @@ public class UsuarioService {
                         u.getApellidos()
                 ))
                 .orElseThrow(() -> new RuntimeException("ID de usuario no encontrado"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioDTO> listarTodos() {
+        return usuarioRepository.findAll()
+                .stream()
+                .map(this::entityToDto)
+                .toList();
     }
 
     private UsuarioDTO entityToDto(Usuario u) {

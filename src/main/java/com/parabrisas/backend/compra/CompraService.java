@@ -1,25 +1,24 @@
 package com.parabrisas.backend.compra;
 
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.parabrisas.backend.detalleCompra.DetalleCompra;
 import com.parabrisas.backend.detalleCompra.DetalleCompraRepository;
 import com.parabrisas.backend.detalleCompra.DetalleListCompraDTO;
 import com.parabrisas.backend.producto.Producto;
+import com.parabrisas.backend.producto.ProductoRepository;
+import com.parabrisas.backend.producto.ProductoService;
 import com.parabrisas.backend.proveedor.Proveedor;
 import com.parabrisas.backend.proveedor.ProveedorRepository;
 import com.parabrisas.backend.usuario.Usuario;
 import com.parabrisas.backend.usuario.UsuarioRepository;
-import com.parabrisas.backend.producto.ProductoRepository;
-import com.parabrisas.backend.producto.ProductoService;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CompraService {
@@ -53,7 +52,7 @@ public class CompraService {
         Usuario usuario = usuarioRepository.findById(compraDTO.idUsuario().longValue())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 3. Crear la cabecera
+        // Crear la cabecera
         Compra compra = new Compra();
         compra.setProveedor(proveedor);
         compra.setUsuario(usuario);
@@ -63,15 +62,62 @@ public class CompraService {
         Compra guardada = compraRepository.save(compra);
 
         for (DetalleListCompraDTO dDto : compraDTO.detalle()) {
-            Producto producto = productoRepository.findById(dDto.idProducto().longValue())
-                    .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+            Producto producto;
 
+            // Si idProducto es 0 o nulo, buscar/crear el producto basado en detalles
+            if (dDto.idProducto() == null || dDto.idProducto() == 0) {
+                // Buscar producto con los datos disponibles
+                producto = productoRepository.findAll().stream()
+                        .filter(p -> p.getMarcaVehiculo().equalsIgnoreCase(dDto.marcaVehiculo()))
+                        .filter(p -> p.getModeloVehiculo().equalsIgnoreCase(dDto.modeloVehiculo()))
+                        .filter(p -> p.getAnioVehiculo().equals(dDto.anioVehiculo()))
+                        .filter(p -> p.getTipoVidrio().equals(dDto.tipoVidrio()))
+                        .filter(p -> p.getCalidadVidrio().equals(dDto.calidadVidrio()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (producto == null) {
+                    // Crear nuevo producto
+                    producto = new Producto();
+                    producto.setMarcaVehiculo(dDto.marcaVehiculo());
+                    producto.setModeloVehiculo(dDto.modeloVehiculo());
+                    producto.setAnioVehiculo(dDto.anioVehiculo());
+                    producto.setTipoVidrio(dDto.tipoVidrio());
+                    producto.setCalidadVidrio(dDto.calidadVidrio());
+
+                    // Obtener proveedor desde idProveedor si viene en detalle
+                    if (dDto.idProveedor() != null && dDto.idProveedor() > 0) {
+                        Proveedor proveedorProducto = proveedorRepository.findById(dDto.idProveedor().longValue())
+                                .orElse(proveedor);
+                        producto.setProveedor(proveedorProducto);
+                    } else {
+                        producto.setProveedor(proveedor);
+                    }
+
+                    producto.setCostoCompra(dDto.costoCompra());
+                    producto.setPrecioVenta(dDto.precioVenta());
+                    producto.setStockActual(0);
+                    producto.setStockMinimo(0);
+                    producto.setUbicacionAlmacen("Almacén");
+
+                    producto = productoRepository.save(producto);
+                }
+            } else {
+                // Usar producto existente por ID
+                producto = productoRepository.findById(dDto.idProducto().longValue())
+                        .orElseThrow(() -> new RuntimeException("Producto ID " + dDto.idProducto() + " no encontrado"));
+            }
+
+            // Crear detalle de compra
             DetalleCompra detalle = new DetalleCompra();
             detalle.setCompra(guardada);
             detalle.setProducto(producto);
             detalle.setCantidad(dDto.cantidad());
+            detalle.setCostoCompra(dDto.costoCompra());
+            detalle.setPrecioVenta(dDto.precioVenta());
             detalleCompraRepository.save(detalle);
 
+            // Incrementar stock
             productoService.anadirStock(producto.getIdProducto().intValue(), dDto.cantidad());
         }
 
@@ -106,6 +152,28 @@ public class CompraService {
     }
 
     @Transactional(readOnly = true)
+    public List<CompraDTO> buscarCompraPorRangoFechas(LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Compra> compras = compraRepository.findAll().stream()
+                .filter(c -> !c.getFechaCompra().isBefore(fechaInicio) && !c.getFechaCompra().isAfter(fechaFin))
+                .collect(Collectors.toList());
+
+        return compras.stream().map(c -> {
+            List<DetalleListCompraDTO> detalles = detalleCompraRepository.findByCompra(c)
+                    .stream().map(this::mapToDetalleDTO).collect(Collectors.toList());
+            return mapToCompraDTO(c, detalles);
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<CompraDTO> buscarCompraPorId(Long idCompra) {
+        return compraRepository.findById(idCompra).map(compra -> {
+            List<DetalleListCompraDTO> detalles = detalleCompraRepository.findByCompra(compra)
+                    .stream().map(this::mapToDetalleDTO).collect(Collectors.toList());
+            return mapToCompraDTO(compra, detalles);
+        });
+    }
+
+    @Transactional(readOnly = true)
     public String obtenerNombreUsuario(int idUsuario) {
         Usuario usuario = usuarioRepository.findById((long) idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -123,7 +191,8 @@ public class CompraService {
                 p.getAnioVehiculo(),
                 p.getCalidadVidrio(),
                 p.getTipoVidrio(),
-                p.getCostoCompra(),
+                d.getCostoCompra() != null ? d.getCostoCompra() : p.getCostoCompra(),
+                d.getPrecioVenta() != null ? d.getPrecioVenta() : p.getPrecioVenta(),
                 d.getCantidad()
         );
     }

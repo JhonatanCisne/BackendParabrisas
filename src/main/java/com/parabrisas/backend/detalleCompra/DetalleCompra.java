@@ -1,8 +1,18 @@
 package com.parabrisas.backend.detalleCompra;
 
+import java.math.BigDecimal;
+
 import com.parabrisas.backend.compra.Compra;
 import com.parabrisas.backend.producto.Producto;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "detalle_compra")
@@ -22,6 +32,12 @@ public class DetalleCompra {
 
     @Column(nullable = false)
     private Integer cantidad;
+
+    @Column(nullable = true)
+    private BigDecimal costoCompra;
+
+    @Column(nullable = true)
+    private BigDecimal precioVenta;
 
     public DetalleCompra() {}
 
@@ -55,5 +71,21 @@ public class DetalleCompra {
 
     public void setCantidad(Integer cantidad) {
         this.cantidad = cantidad;
+    }
+
+    public BigDecimal getCostoCompra() {
+        return costoCompra;
+    }
+
+    public void setCostoCompra(BigDecimal costoCompra) {
+        this.costoCompra = costoCompra;
+    }
+
+    public BigDecimal getPrecioVenta() {
+        return precioVenta;
+    }
+
+    public void setPrecioVenta(BigDecimal precioVenta) {
+        this.precioVenta = precioVenta;
     }
 }
