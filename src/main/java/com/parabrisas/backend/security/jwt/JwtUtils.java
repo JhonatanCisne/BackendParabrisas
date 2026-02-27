@@ -17,7 +17,7 @@ public class JwtUtils {
     @Value("${cisneros.jwt.expiration}")
     private Long jwtExpirationMs;
 
-    // Generar el token (Se usará en tu Login del Service)
+    // Generar el token
     public String generateJwtToken(Long idUsuario, String correo, String rol) {
         return Jwts.builder()
                 .setSubject(correo)

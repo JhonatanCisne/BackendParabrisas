@@ -13,7 +13,7 @@ public class Compra {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idCompra;
+    private Long idCompra;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_proveedor", nullable = false)
@@ -31,11 +31,11 @@ public class Compra {
 
     public Compra() {}
 
-    public Integer getIdCompra() {
+    public Long getIdCompra() {
         return idCompra;
     }
 
-    public void setIdCompra(Integer idCompra) {
+    public void setIdCompra(Long idCompra) {
         this.idCompra = idCompra;
     }
 

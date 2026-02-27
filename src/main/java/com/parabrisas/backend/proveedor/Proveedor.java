@@ -13,7 +13,7 @@ public class Proveedor {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_proveedor")
-    private Integer idProveedor;
+    private Long idProveedor;
 
     @Column(nullable = false, length = 100)
     private String nombreProveedor;
@@ -33,11 +33,11 @@ public class Proveedor {
     @OneToMany(mappedBy = "proveedor", fetch = FetchType.LAZY)
     private List<Producto> productos;
 
-    public Integer getIdProveedor() {
+    public Long getIdProveedor() {
         return idProveedor;
     }
 
-    public void setIdProveedor(Integer idProveedor) {
+    public void setIdProveedor(Long idProveedor) {
         this.idProveedor = idProveedor;
     }
 
