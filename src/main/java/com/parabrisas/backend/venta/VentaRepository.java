@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface VentaRepository extends JpaRepository <Venta, Long> {
     Optional<Venta> findByFechaVenta(LocalDate fechaVenta);
+    Optional <Venta> findByPlaca (String placa);
 }

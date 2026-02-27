@@ -12,7 +12,7 @@ public class Venta {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idVenta;
+    private Long idVenta;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "id_usuario", nullable = false)
@@ -24,13 +24,16 @@ public class Venta {
     @Column(nullable = false)
     private BigDecimal totalVenta;
 
+    @Column( nullable = false)
+    private String placa;
+
     public Venta() {}
 
-    public Integer getIdVenta() {
+    public Long getIdVenta() {
         return idVenta;
     }
 
-    public void setIdVenta(Integer idVenta) {
+    public void setIdVenta(Long idVenta) {
         this.idVenta = idVenta;
     }
 
@@ -56,5 +59,13 @@ public class Venta {
 
     public void setTotalVenta(BigDecimal totalVenta) {
         this.totalVenta = totalVenta;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String placa) {
+        this.placa = placa;
     }
 }
