@@ -1,20 +1,27 @@
 package com.parabrisas.backend.security.jwt;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Date;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import java.security.Key;
-import java.util.Date;
+
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtils {
 
-    @Value("${cisneros.jwt.secret}")
+    @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${cisneros.jwt.expiration}")
+    @Value("${jwt.expiration}")
     private Long jwtExpirationMs;
 
     // Generar el token
@@ -58,7 +65,22 @@ public class JwtUtils {
     }
 
     private Key getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(resolveSecretBytes());
+    }
+
+    private byte[] resolveSecretBytes() {
+        try {
+            byte[] decoded = Decoders.BASE64.decode(jwtSecret);
+            if (decoded.length >= 32) {
+                return decoded;
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        try {
+            return MessageDigest.getInstance("SHA-256").digest(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("No se pudo inicializar SHA-256 para jwt.secret", e);
+        }
     }
 }

@@ -33,7 +33,7 @@ public class Producto {
     @Column(nullable = false, length = 80)
     private String modeloVehiculo;
 
-    @Column(nullable = false, length = 4)
+    @Column(nullable = false, length = 12)
     private String anioVehiculo;
 
     @Column(nullable = false, length = 50)
