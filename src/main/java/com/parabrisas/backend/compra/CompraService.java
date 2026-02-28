@@ -97,9 +97,15 @@ public class CompraService {
                     producto.setCostoCompra(dDto.costoCompra());
                     producto.setPrecioVenta(dDto.precioVenta());
                     producto.setStockActual(0);
-                    producto.setStockMinimo(0);
-                    producto.setUbicacionAlmacen("Almacén");
+                    producto.setStockBajoAlerta(true);
+                    producto.setUbicacionAlmacen(dDto.ubicacionAlmacen());
 
+                    producto = productoRepository.save(producto);
+                } else {
+                    // Actualizar datos del producto existente con la nueva compra
+                    producto.setCostoCompra(dDto.costoCompra());
+                    producto.setPrecioVenta(dDto.precioVenta());
+                    producto.setUbicacionAlmacen(dDto.ubicacionAlmacen());
                     producto = productoRepository.save(producto);
                 }
             } else {
@@ -115,6 +121,7 @@ public class CompraService {
             detalle.setCantidad(dDto.cantidad());
             detalle.setCostoCompra(dDto.costoCompra());
             detalle.setPrecioVenta(dDto.precioVenta());
+            detalle.setUbicacionAlmacen(dDto.ubicacionAlmacen());
             detalleCompraRepository.save(detalle);
 
             // Incrementar stock
@@ -193,7 +200,8 @@ public class CompraService {
                 p.getTipoVidrio(),
                 d.getCostoCompra() != null ? d.getCostoCompra() : p.getCostoCompra(),
                 d.getPrecioVenta() != null ? d.getPrecioVenta() : p.getPrecioVenta(),
-                d.getCantidad()
+                d.getCantidad(),
+                d.getUbicacionAlmacen()
         );
     }
 

@@ -2,8 +2,10 @@ package com.parabrisas.backend.venta;
 
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -16,6 +18,9 @@ import com.parabrisas.backend.detalleVenta.DetalleVentaRepository;
 import com.parabrisas.backend.producto.Producto;
 import com.parabrisas.backend.producto.ProductoRepository;
 import com.parabrisas.backend.producto.ProductoService;
+import com.parabrisas.backend.shared.dto.EstadisticasDTO;
+import com.parabrisas.backend.shared.dto.VentasPorMesDTO;
+import com.parabrisas.backend.shared.dto.VentasPorProductoDTO;
 import com.parabrisas.backend.usuario.Usuario;
 import com.parabrisas.backend.usuario.UsuarioRepository;
 
@@ -172,5 +177,156 @@ public class VentaService {
                 placa,
                 detalles
         );
+    }
+
+    @Transactional(readOnly = true)
+    public EstadisticasDTO obtenerEstadisticas() {
+        // Vidrio más vendido
+        List<Venta> todasVentas = ventaRepository.findAll();
+        String vidrioMasVendido = todasVentas.stream()
+                .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                .collect(Collectors.groupingBy(dv -> dv.getProducto().getTipoVidrio() + " " + dv.getProducto().getCalidadVidrio(), 
+                        Collectors.summingInt(DetalleVenta::getCantidad)))
+                .entrySet().stream()
+                .max((e1, e2) -> e1.getValue().compareTo(e2.getValue()))
+                .map(Map.Entry::getKey)
+                .orElse("N/A");
+
+        // Total vidrios vendidos
+        Integer totalVidriosVendidos = todasVentas.stream()
+                .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                .mapToInt(DetalleVenta::getCantidad)
+                .sum();
+
+        // Total vidrios en stock
+        Integer totalVidriosEnStock = productoRepository.findAll().stream()
+                .mapToInt(Producto::getStockActual)
+                .sum();
+
+        // Total general de ventas
+        java.math.BigDecimal totalGeneralVentas = todasVentas.stream()
+                .map(Venta::getTotalVenta)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        return new EstadisticasDTO(vidrioMasVendido, totalVidriosVendidos, totalVidriosEnStock, totalGeneralVentas);
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentasPorMesDTO> obtenerVentasPorMes(LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Venta> ventas = ventaRepository.findAll().stream()
+                .filter(v -> !v.getFechaVenta().isBefore(fechaInicio) && !v.getFechaVenta().isAfter(fechaFin))
+                .collect(Collectors.toList());
+
+        Map<YearMonth, List<Venta>> ventasPorMes = ventas.stream()
+                .collect(Collectors.groupingBy(v -> YearMonth.from(v.getFechaVenta())));
+
+        return ventasPorMes.entrySet().stream()
+                .map(entry -> {
+                    YearMonth mes = entry.getKey();
+                    List<Venta> ventasDelMes = entry.getValue();
+                    Integer cantidad = ventasDelMes.stream()
+                            .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                            .mapToInt(DetalleVenta::getCantidad)
+                            .sum();
+                    java.math.BigDecimal total = ventasDelMes.stream()
+                            .map(Venta::getTotalVenta)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+                    return new VentasPorMesDTO(mes.toString(), cantidad, total);
+                })
+                .sorted((a, b) -> a.mes().compareTo(b.mes()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentasPorMesDTO> obtenerVentasPorMesFiltrado(String mes, int ano) {
+        YearMonth yearMonth = YearMonth.of(ano, Integer.parseInt(mes));
+        LocalDate inicio = yearMonth.atDay(1);
+        LocalDate fin = yearMonth.atEndOfMonth();
+
+        List<Venta> ventas = ventaRepository.findAll().stream()
+                .filter(v -> !v.getFechaVenta().isBefore(inicio) && !v.getFechaVenta().isAfter(fin))
+                .collect(Collectors.toList());
+
+        Integer cantidad = ventas.stream()
+                .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                .mapToInt(DetalleVenta::getCantidad)
+                .sum();
+
+        java.math.BigDecimal total = ventas.stream()
+                .map(Venta::getTotalVenta)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        List<VentasPorMesDTO> resultado = new ArrayList<>();
+        resultado.add(new VentasPorMesDTO(yearMonth.toString(), cantidad, total));
+        return resultado;
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentasPorMesDTO> obtenerVentasPorMesRango(String mesInicio, String mesFin, int ano) {
+        int mesInicioInt = Integer.parseInt(mesInicio);
+        int mesFinInt = Integer.parseInt(mesFin);
+        
+        List<VentasPorMesDTO> resultado = new ArrayList<>();
+        
+        for (int mes = mesInicioInt; mes <= mesFinInt; mes++) {
+            YearMonth yearMonth = YearMonth.of(ano, mes);
+            LocalDate inicio = yearMonth.atDay(1);
+            LocalDate fin = yearMonth.atEndOfMonth();
+
+            List<Venta> ventas = ventaRepository.findAll().stream()
+                    .filter(v -> !v.getFechaVenta().isBefore(inicio) && !v.getFechaVenta().isAfter(fin))
+                    .collect(Collectors.toList());
+
+            Integer cantidad = ventas.stream()
+                    .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                    .mapToInt(DetalleVenta::getCantidad)
+                    .sum();
+
+            java.math.BigDecimal total = ventas.stream()
+                    .map(Venta::getTotalVenta)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            resultado.add(new VentasPorMesDTO(yearMonth.toString(), cantidad, total));
+        }
+        
+        return resultado.stream()
+                .sorted((a, b) -> a.mes().compareTo(b.mes()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentasPorProductoDTO> obtenerVentasPorProducto() {
+        List<Venta> todasVentas = ventaRepository.findAll();
+        
+        // Crear un mapa agrupado por marca, modelo, año, tipo y calidad
+        Map<String, List<DetalleVenta>> productosAgrupados = todasVentas.stream()
+                .flatMap(v -> detalleVentaRepository.findByVenta(v).stream())
+                .collect(Collectors.groupingBy(dv -> 
+                    dv.getProducto().getMarcaVehiculo() + "|" +
+                    dv.getProducto().getModeloVehiculo() + "|" +
+                    dv.getProducto().getAnioVehiculo() + "|" +
+                    dv.getProducto().getTipoVidrio() + "|" +
+                    dv.getProducto().getCalidadVidrio()
+                ));
+        
+        // Convertir a DTOs con cantidad total por producto
+        return productosAgrupados.entrySet().stream()
+                .map(entry -> {
+                    String[] partes = entry.getKey().split("\\|");
+                    Integer cantidadTotal = entry.getValue().stream()
+                            .mapToInt(DetalleVenta::getCantidad)
+                            .sum();
+                    
+                    return new VentasPorProductoDTO(
+                        partes[0], // marcaVehiculo
+                        partes[1], // modeloVehiculo
+                        partes[2], // anioVehiculo (como String)
+                        partes[3], // tipoVidrio
+                        partes[4], // calidadVidrio
+                        cantidadTotal
+                    );
+                })
+                .sorted((a, b) -> b.cantidad().compareTo(a.cantidad())) // Ordenar por cantidad descendente
+                .collect(Collectors.toList());
     }
 }

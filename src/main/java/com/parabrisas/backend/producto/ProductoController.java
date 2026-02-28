@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.parabrisas.backend.shared.dto.ProductoBajoStockDTO;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -67,8 +69,19 @@ public class ProductoController {
         return ResponseEntity.ok().build();
     }
 
+    @PatchMapping("/{id}/stock-bajo-alerta")
+    public ResponseEntity<Void> toggleStockBajoAlerta(@PathVariable int id, @RequestParam boolean valor) {
+        productoService.actualizarStockBajoAlerta(id, valor);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/buscar-placa/{placa}")
     public ResponseEntity<List<ProductListDTO>> buscarPorPlaca(@PathVariable String placa) {
         return ResponseEntity.ok(productoService.buscarProductosPorPlaca(placa));
+    }
+
+    @GetMapping("/bajo-stock")
+    public ResponseEntity<List<ProductoBajoStockDTO>> obtenerProductosBajoStock() {
+        return ResponseEntity.ok(productoService.obtenerProductosBajoStock());
     }
 }
