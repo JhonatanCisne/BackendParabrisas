@@ -16,6 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.parabrisas.backend.shared.dto.EstadisticasDTO;
+import com.parabrisas.backend.shared.dto.VentasPorMesDTO;
+import com.parabrisas.backend.shared.dto.VentasPorProductoDTO;
+
 import jakarta.validation.Valid;
 
 @RestController
@@ -78,5 +82,37 @@ public class VentaController {
     @GetMapping("/usuario-nombre/{id}")
     public ResponseEntity<String> obtenerNombreUsuario(@PathVariable int id) {
         return ResponseEntity.ok(ventaService.obtenerNombreUsuario(id));
+    }
+
+    @GetMapping("/estadisticas")
+    public ResponseEntity<EstadisticasDTO> obtenerEstadisticas() {
+        return ResponseEntity.ok(ventaService.obtenerEstadisticas());
+    }
+
+    @GetMapping("/ventas-por-mes")
+    public ResponseEntity<List<VentasPorMesDTO>> obtenerVentasPorMes(
+            @RequestParam("fechaInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+            @RequestParam("fechaFin") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+        return ResponseEntity.ok(ventaService.obtenerVentasPorMes(fechaInicio, fechaFin));
+    }
+
+    @GetMapping("/ventas-por-mes-filtrado")
+    public ResponseEntity<List<VentasPorMesDTO>> obtenerVentasPorMesFiltrado(
+            @RequestParam("mes") String mes,
+            @RequestParam("ano") int ano) {
+        return ResponseEntity.ok(ventaService.obtenerVentasPorMesFiltrado(mes, ano));
+    }
+
+    @GetMapping("/ventas-por-mes-rango")
+    public ResponseEntity<List<VentasPorMesDTO>> obtenerVentasPorMesRango(
+            @RequestParam("mesInicio") String mesInicio,
+            @RequestParam("mesFin") String mesFin,
+            @RequestParam("ano") int ano) {
+        return ResponseEntity.ok(ventaService.obtenerVentasPorMesRango(mesInicio, mesFin, ano));
+    }
+
+    @GetMapping("/ventas-por-producto")
+    public ResponseEntity<List<VentasPorProductoDTO>> obtenerVentasPorProducto() {
+        return ResponseEntity.ok(ventaService.obtenerVentasPorProducto());
     }
 }

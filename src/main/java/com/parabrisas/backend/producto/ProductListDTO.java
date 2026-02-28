@@ -23,5 +23,7 @@ public record ProductListDTO (
 
     Integer stockActual,
 
+    Boolean stockBajoAlerta,
+
     String ubicacionAlmacen
 ){}

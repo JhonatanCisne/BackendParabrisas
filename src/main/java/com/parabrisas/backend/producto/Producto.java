@@ -1,12 +1,22 @@
 package com.parabrisas.backend.producto;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import com.parabrisas.backend.detalleCompra.DetalleCompra;
 import com.parabrisas.backend.detalleVenta.DetalleVenta;
 import com.parabrisas.backend.proveedor.Proveedor;
-import jakarta.persistence.*;
 
-import java.math.BigDecimal;
-import java.util.List;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "producto")
@@ -47,7 +57,7 @@ public class Producto {
     private Integer stockActual;
 
     @Column(name = "stock_minimo", nullable = false)
-    private Integer stockMinimo;
+    private Boolean stockBajoAlerta;
 
     @Column(length = 100)
     private String ubicacionAlmacen;
@@ -140,12 +150,12 @@ public class Producto {
         this.stockActual = stockActual;
     }
 
-    public Integer getStockMinimo() {
-        return stockMinimo;
+    public Boolean getStockBajoAlerta() {
+        return stockBajoAlerta;
     }
 
-    public void setStockMinimo(Integer stockMinimo) {
-        this.stockMinimo = stockMinimo;
+    public void setStockBajoAlerta(Boolean stockBajoAlerta) {
+        this.stockBajoAlerta = stockBajoAlerta;
     }
 
     public String getUbicacionAlmacen() {

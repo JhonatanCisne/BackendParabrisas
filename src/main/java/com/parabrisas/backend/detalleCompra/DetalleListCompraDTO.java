@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -35,5 +36,8 @@ public record DetalleListCompraDTO(
 
         @NotNull(message = "La cantidad es obligatoria")
         @Positive(message = "El valor debe ser mayor a 0")
-        Integer cantidad
+        Integer cantidad,
+
+        @NotBlank(message = "La ubicación del almacén es obligatoria")
+        String ubicacionAlmacen
 ) {}

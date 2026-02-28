@@ -3,6 +3,7 @@ package com.parabrisas.backend.producto;
 
 import com.parabrisas.backend.proveedor.Proveedor;
 import com.parabrisas.backend.proveedor.ProveedorRepository;
+import com.parabrisas.backend.shared.dto.ProductoBajoStockDTO;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,6 +105,8 @@ public class ProductoService {
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
         producto.setStockActual(producto.getStockActual() + cantidad);
+        // Si se agrega stock, limpiar la alerta de bajo stock
+        producto.setStockBajoAlerta(false);
         productoRepository.save(producto);
     }
 
@@ -119,8 +122,8 @@ public class ProductoService {
         p.setCostoCompra(dto.costoCompra());
         p.setPrecioVenta(dto.precioVenta());
         p.setStockActual(dto.stockActual());
+        p.setStockBajoAlerta(dto.stockBajoAlerta());
         p.setUbicacionAlmacen(dto.ubicacionAlmacen());
-        if (p.getStockMinimo() == null) p.setStockMinimo(5);
     }
 
     private ProductListDTO mapToProductListDTO(Producto p) {
@@ -135,6 +138,7 @@ public class ProductoService {
                 p.getCostoCompra(),
                 p.getPrecioVenta(),
                 p.getStockActual(),
+                p.getStockBajoAlerta(),
                 p.getUbicacionAlmacen()
         );
     }
@@ -146,5 +150,31 @@ public class ProductoService {
                 .filter(p -> p.getStockActual() > 0)
                 .map(this::mapToProductListDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoBajoStockDTO> obtenerProductosBajoStock() {
+        return productoRepository.findAll().stream()
+                .filter(p -> p.getStockBajoAlerta() != null && p.getStockBajoAlerta())
+                .map(p -> new ProductoBajoStockDTO(
+                        p.getIdProducto(),
+                        p.getMarcaVehiculo(),
+                        p.getModeloVehiculo(),
+                        p.getAnioVehiculo(),
+                        p.getTipoVidrio(),
+                        p.getCalidadVidrio(),
+                        p.getProveedor().getNombreProveedor(),
+                        p.getStockActual(),
+                        p.getPrecioVenta()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void actualizarStockBajoAlerta(int id, boolean valor) {
+        Producto producto = productoRepository.findById((long) id)
+                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+        producto.setStockBajoAlerta(valor);
+        productoRepository.save(producto);
     }
 }

@@ -39,6 +39,9 @@ public class DetalleCompra {
     @Column(nullable = true)
     private BigDecimal precioVenta;
 
+    @Column(length = 100)
+    private String ubicacionAlmacen;
+
     public DetalleCompra() {}
 
     public Long getIdDetalleCompra() {
@@ -87,5 +90,13 @@ public class DetalleCompra {
 
     public void setPrecioVenta(BigDecimal precioVenta) {
         this.precioVenta = precioVenta;
+    }
+
+    public String getUbicacionAlmacen() {
+        return ubicacionAlmacen;
+    }
+
+    public void setUbicacionAlmacen(String ubicacionAlmacen) {
+        this.ubicacionAlmacen = ubicacionAlmacen;
     }
 }
