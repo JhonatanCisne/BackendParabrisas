@@ -64,50 +64,32 @@ public class CompraService {
         for (DetalleListCompraDTO dDto : compraDTO.detalle()) {
             Producto producto;
 
-            // Si idProducto es 0 o nulo, buscar/crear el producto basado en detalles
+            // Si idProducto es 0 o nulo, crear SIEMPRE un producto nuevo
+            // para permitir la misma referencia en diferentes ubicaciones.
             if (dDto.idProducto() == null || dDto.idProducto() == 0) {
-                // Buscar producto con los datos disponibles
-                producto = productoRepository.findAll().stream()
-                        .filter(p -> p.getMarcaVehiculo().equalsIgnoreCase(dDto.marcaVehiculo()))
-                        .filter(p -> p.getModeloVehiculo().equalsIgnoreCase(dDto.modeloVehiculo()))
-                        .filter(p -> p.getAnioVehiculo().equals(dDto.anioVehiculo()))
-                        .filter(p -> p.getTipoVidrio().equals(dDto.tipoVidrio()))
-                        .filter(p -> p.getCalidadVidrio().equals(dDto.calidadVidrio()))
-                        .findFirst()
-                        .orElse(null);
+                producto = new Producto();
+                producto.setMarcaVehiculo(dDto.marcaVehiculo());
+                producto.setModeloVehiculo(dDto.modeloVehiculo());
+                producto.setAnioVehiculo(dDto.anioVehiculo());
+                producto.setTipoVidrio(dDto.tipoVidrio());
+                producto.setCalidadVidrio(dDto.calidadVidrio());
 
-                if (producto == null) {
-                    // Crear nuevo producto
-                    producto = new Producto();
-                    producto.setMarcaVehiculo(dDto.marcaVehiculo());
-                    producto.setModeloVehiculo(dDto.modeloVehiculo());
-                    producto.setAnioVehiculo(dDto.anioVehiculo());
-                    producto.setTipoVidrio(dDto.tipoVidrio());
-                    producto.setCalidadVidrio(dDto.calidadVidrio());
-
-                    // Obtener proveedor desde idProveedor si viene en detalle
-                    if (dDto.idProveedor() != null && dDto.idProveedor() > 0) {
-                        Proveedor proveedorProducto = proveedorRepository.findById(dDto.idProveedor().longValue())
-                                .orElse(proveedor);
-                        producto.setProveedor(proveedorProducto);
-                    } else {
-                        producto.setProveedor(proveedor);
-                    }
-
-                    producto.setCostoCompra(dDto.costoCompra());
-                    producto.setPrecioVenta(dDto.precioVenta());
-                    producto.setStockActual(0);
-                    producto.setStockBajoAlerta(true);
-                    producto.setUbicacionAlmacen(dDto.ubicacionAlmacen());
-
-                    producto = productoRepository.save(producto);
+                // Obtener proveedor desde idProveedor si viene en detalle
+                if (dDto.idProveedor() != null && dDto.idProveedor() > 0) {
+                    Proveedor proveedorProducto = proveedorRepository.findById(dDto.idProveedor().longValue())
+                            .orElse(proveedor);
+                    producto.setProveedor(proveedorProducto);
                 } else {
-                    // Actualizar datos del producto existente con la nueva compra
-                    producto.setCostoCompra(dDto.costoCompra());
-                    producto.setPrecioVenta(dDto.precioVenta());
-                    producto.setUbicacionAlmacen(dDto.ubicacionAlmacen());
-                    producto = productoRepository.save(producto);
+                    producto.setProveedor(proveedor);
                 }
+
+                producto.setCostoCompra(dDto.costoCompra());
+                producto.setPrecioVenta(dDto.precioVenta());
+                producto.setStockActual(0);
+                producto.setStockBajoAlerta(true);
+                producto.setUbicacionAlmacen(dDto.ubicacionAlmacen());
+
+                producto = productoRepository.save(producto);
             } else {
                 // Usar producto existente por ID
                 producto = productoRepository.findById(dDto.idProducto().longValue())

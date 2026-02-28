@@ -1,4 +1,5 @@
 package com.parabrisas.backend.producto;
+import com.parabrisas.backend.notification.WhatsAppService;
 
 
 import com.parabrisas.backend.proveedor.Proveedor;
@@ -16,10 +17,14 @@ public class ProductoService {
 
     private final ProductoRepository productoRepository;
     private final ProveedorRepository proveedorRepository;
+    private final WhatsAppService whatsAppService;
 
-    public ProductoService(ProductoRepository productoRepository, ProveedorRepository proveedorRepository) {
+    public ProductoService(ProductoRepository productoRepository, 
+                          ProveedorRepository proveedorRepository,
+                          WhatsAppService whatsAppService) {
         this.productoRepository = productoRepository;
         this.proveedorRepository = proveedorRepository;
+        this.whatsAppService = whatsAppService;
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +102,42 @@ public class ProductoService {
 
         producto.setStockActual(producto.getStockActual() - cantidad);
         productoRepository.save(producto);
+
+        if (!Boolean.TRUE.equals(producto.getStockBajoAlerta())) {
+            return;
+        }
+        
+        // Verificar si el producto individual llegó a 1 con stockBajoAlerta activo
+        if (producto.getStockActual() == 1) {
+            whatsAppService.enviarAlertaStockBajo(producto);
+        }
+        
+        // Verificar stock total de productos similares
+        verificarStockProductosSimilares(producto);
+    }
+    
+    /**
+     * Verifica el stock total de productos con las mismas características
+     * y envía notificación si el total es 1 o 0
+     */
+    private void verificarStockProductosSimilares(Producto producto) {
+        List<Producto> productosSimilares = productoRepository.findProductosSimilares(
+            producto.getMarcaVehiculo(),
+            producto.getModeloVehiculo(),
+            producto.getAnioVehiculo(),
+            producto.getTipoVidrio(),
+            producto.getCalidadVidrio(),
+            producto.getProveedor().getIdProveedor()
+        );
+        
+        int stockTotal = productosSimilares.stream()
+            .mapToInt(Producto::getStockActual)
+            .sum();
+        
+        // Enviar notificación si el stock total es 1 o 0
+        if (stockTotal <= 1) {
+            whatsAppService.enviarAlertaStockCriticoGrupo(productosSimilares, stockTotal);
+        }
     }
 
     @Transactional
